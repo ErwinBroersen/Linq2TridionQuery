@@ -155,7 +155,7 @@ namespace Linq2TridionQuery
             {
                 filter = new tridion.LimitFilter((Int32)((ConstantExpression)take).Value);
             }
-            this.Visit(source); 
+            this.Visit(source);
             return source;
         }
 
@@ -180,7 +180,7 @@ namespace Linq2TridionQuery
                         sort.Add(new tridion.SortParameter(new tridion.ComponentSchemaColumn(), orderType));
                         break;
                     case "ItemCreationDate":
-                        sort.Add(new tridion.SortParameter(new tridion.ItemTitleColumn(), orderType));
+                        sort.Add(new tridion.SortParameter(new tridion.ItemCreationDateColumn(), orderType));
                         break;
                     case "ItemId":
                         sort.Add(new tridion.SortParameter(new tridion.ItemIdColumn(), orderType));
@@ -355,11 +355,6 @@ namespace Linq2TridionQuery
 
                 // KeywordCriteria
 
-                // TaxonomyKeywordCriteria
-                // TaxonomyKeywordDescriptionCriteria
-                // TaxonomyKeywordKeyCriteria
-                // TaxonomyKeywordNameCriteria
-
                 switch (((MemberExpression)b.Left).Member.Name)
                 {
                     case "IsMultimedia":
@@ -434,16 +429,16 @@ namespace Linq2TridionQuery
                         break;
 
                     case "StructureGroupUri":
-                        // TODO includeChildStructureGroups
-                        currentCriteriaNode.AddCriteria(new tridion.StructureGroupCriteria((string)((ConstantExpression)b.Right).Value));
+                        IStructureGroupUri sgu = (StructureGroupUri)((ConstantExpression)b.Right).Value;
+                        currentCriteriaNode.AddCriteria(new tridion.StructureGroupCriteria(sgu.Uri, sgu.IncludeChild));
                         break;
                     case "StructureGroupDirectory":
-                        // TODO includeChildStructureGroups
-                        currentCriteriaNode.AddCriteria(new tridion.StructureGroupDirectoryCriteria((string)((ConstantExpression)b.Right).Value, DetermineTridionFieldOperator(b.NodeType)));
+                        IStructureGroupDirectory sgd = (StructureGroupDirectory)((ConstantExpression)b.Right).Value;
+                        currentCriteriaNode.AddCriteria(new tridion.StructureGroupDirectoryCriteria(sgd.Directory, sgd.Operator ?? tridion.Criteria.Equal, sgd.IncludeChild));
                         break;
                     case "StructureGroupTitle":
-                        // TODO includeChildStructureGroups
-                        currentCriteriaNode.AddCriteria(new tridion.StructureGroupTitleCriteria((string)((ConstantExpression)b.Right).Value, DetermineTridionFieldOperator(b.NodeType)));
+                        IStructureGroupTitle sgt = (StructureGroupTitle)((ConstantExpression)b.Right).Value;
+                        currentCriteriaNode.AddCriteria(new tridion.StructureGroupTitleCriteria(sgt.Title, sgt.Operator ?? tridion.Criteria.Equal, sgt.IncludeChild));
                         break;
 
                     case "TaxonomyUsedForIdentification":
@@ -452,40 +447,102 @@ namespace Linq2TridionQuery
                     case "TaxonomyUri":
                         currentCriteriaNode.AddCriteria(new tridion.TaxonomyCriteria((string)((ConstantExpression)b.Right).Value));
                         break;
+                    case "TaxonomyKeyword":
+                        ITaxonomyKeyword tk = (TaxonomyKeyword)((ConstantExpression)b.Right).Value;
+                        if(tk.PublicationId != null && tk.TaxonomyId != null && tk.KeywordId != null)
+                        {
+                            currentCriteriaNode.AddCriteria(new tridion.TaxonomyKeywordCriteria(tk.PublicationId.Value, tk.TaxonomyId.Value, tk.KeywordId.Value, tk.IncludeKeywordBranch));
+                        }
+                        else if(!string.IsNullOrEmpty(tk.TaxonomyUri) && !string.IsNullOrEmpty(tk.KeywordUri))
+                        {
+                            currentCriteriaNode.AddCriteria(new tridion.TaxonomyKeywordCriteria(tk.TaxonomyUri, tk.KeywordUri, tk.IncludeKeywordBranch));
+                        }
+                        else
+                        {
+                            throw new NotSupportedException("Use either all the integer variables (PublicationId, TaxonomyId and KeywordId) or all the string variables (TaxonomyUri and KeywordUri) to create a correct KeywordCriteria");
+                        }
+                        break;
+                    case "TaxonomyKeywordDescription":
+                        ITaxonomyKeywordDescription tkd = (TaxonomyKeywordDescription)((ConstantExpression)b.Right).Value;
+                        if(tkd.PublicationId != null && tkd.TaxonomyId != null)
+                        {
+                            currentCriteriaNode.AddCriteria(new tridion.TaxonomyKeywordDescriptionCriteria(tkd.PublicationId.Value, tkd.TaxonomyId.Value, tkd.KeywordDescription, tkd.IncludeKeywordBranch, tkd.Operator ?? tridion.Criteria.Equal));
+                        }
+                        else if(!string.IsNullOrEmpty(tkd.TaxonomyUri))
+                        {
+                            currentCriteriaNode.AddCriteria(new tridion.TaxonomyKeywordDescriptionCriteria(tkd.TaxonomyUri, tkd.KeywordDescription, tkd.IncludeKeywordBranch, tkd.Operator ?? tridion.Criteria.Equal));
+                        }
+                        else
+                        {
+                            throw new NotSupportedException("Use either all the integer variables (PublicationId, TaxonomyId) or all the string variable (TaxonomyUri) to create a correct KeywordCriteria");
+                        }
+                        break;
+                    case "TaxonomyKeywordKey":
+                        ITaxonomyKeywordKey tkk = (TaxonomyKeywordKey)((ConstantExpression)b.Right).Value;
+                        if(tkk.PublicationId != null && tkk.TaxonomyId != null)
+                        {
+                            currentCriteriaNode.AddCriteria(new tridion.TaxonomyKeywordKeyCriteria(tkk.PublicationId.Value, tkk.TaxonomyId.Value, tkk.KeywordKey, tkk.IncludeKeywordBranch, tkk.Operator ?? tridion.Criteria.Equal));
+                        }
+                        else if(!string.IsNullOrEmpty(tkk.TaxonomyUri))
+                        {
+                            currentCriteriaNode.AddCriteria(new tridion.TaxonomyKeywordKeyCriteria(tkk.TaxonomyUri, tkk.KeywordKey, tkk.IncludeKeywordBranch, tkk.Operator ?? tridion.Criteria.Equal));
+                        }
+                        else
+                        {
+                            throw new NotSupportedException("Use either all the integer variables (PublicationId, TaxonomyId) or all the string variable (TaxonomyUri) to create a correct KeywordCriteria");
+                        }
+                        break;
+                    case "TaxonomyKeywordName":
+                        ITaxonomyKeywordName tkn = (TaxonomyKeywordName)((ConstantExpression)b.Right).Value;
+                        if(tkn.PublicationId != null && tkn.TaxonomyId != null)
+                        {
+                            currentCriteriaNode.AddCriteria(new tridion.TaxonomyKeywordNameCriteria(tkn.PublicationId.Value, tkn.TaxonomyId.Value, tkn.KeywordName, tkn.IncludeKeywordBranch, tkn.Operator ?? tridion.Criteria.Equal));
+                        }
+                        else if(!string.IsNullOrEmpty(tkn.TaxonomyUri))
+                        {
+                            currentCriteriaNode.AddCriteria(new tridion.TaxonomyKeywordNameCriteria(tkn.TaxonomyUri, tkn.KeywordName, tkn.IncludeKeywordBranch, tkn.Operator ?? tridion.Criteria.Equal));
+                        }
+                        else
+                        {
+                            throw new NotSupportedException("Use either all the integer variables (PublicationId, TaxonomyId) or all the string variable (TaxonomyUri) to create a correct KeywordCriteria");
+                        }
+                        break;
                     default:
                         // It is a Custom Metadata Field
-
-                        // Determine type of field
-                        tridion.CustomMetaValueCriteria CustomMetadataCriteria = null;
-                        switch (Type.GetTypeCode(((ConstantExpression)b.Right).Value.GetType()))
-	                    {
-                            case TypeCode.DateTime:
-                                CustomMetadataCriteria = new tridion.CustomMetaValueCriteria(new tridion.CustomMetaKeyCriteria(((MemberExpression)b.Left).Member.Name), (DateTime)((ConstantExpression)b.Right).Value, DetermineTridionFieldOperator(b.NodeType));
-                                break;
-                            case TypeCode.Boolean:
-                            case TypeCode.Byte:
-                            case TypeCode.Decimal:
-                            case TypeCode.Double:
-                            case TypeCode.Int16:
-                            case TypeCode.Int32:
-                            case TypeCode.Int64:
-                            case TypeCode.SByte:
-                            case TypeCode.Single:
-                            case TypeCode.UInt16:
-                            case TypeCode.UInt32:
-                            case TypeCode.UInt64:
-                                CustomMetadataCriteria = new tridion.CustomMetaValueCriteria(new tridion.CustomMetaKeyCriteria(((MemberExpression)b.Left).Member.Name), (float)((ConstantExpression)b.Right).Value, DetermineTridionFieldOperator(b.NodeType));
-                                break;
-                            case TypeCode.String:
-                                CustomMetadataCriteria = new tridion.CustomMetaValueCriteria(new tridion.CustomMetaKeyCriteria(((MemberExpression)b.Left).Member.Name), (string)((ConstantExpression)b.Right).Value, DetermineTridionFieldOperator(b.NodeType));
-                                break;
-                            default:
-                                break;
-	                    }
-
-                        if(CustomMetadataCriteria != null)
+                        if (CheckMemberAttributes(((MemberExpression)b.Left).Member))
                         {
-                            currentCriteriaNode.AddCriteria(CustomMetadataCriteria);
+                            // Determine type of field
+                            tridion.CustomMetaValueCriteria CustomMetadataCriteria = null;
+                            switch (Type.GetTypeCode(((ConstantExpression)b.Right).Value.GetType()))
+                            {
+                                case TypeCode.DateTime:
+                                    CustomMetadataCriteria = new tridion.CustomMetaValueCriteria(new tridion.CustomMetaKeyCriteria(((MemberExpression)b.Left).Member.Name), (DateTime)((ConstantExpression)b.Right).Value, DetermineTridionFieldOperator(b.NodeType));
+                                    break;
+                                case TypeCode.Boolean:
+                                case TypeCode.Byte:
+                                case TypeCode.Decimal:
+                                case TypeCode.Double:
+                                case TypeCode.Int16:
+                                case TypeCode.Int32:
+                                case TypeCode.Int64:
+                                case TypeCode.SByte:
+                                case TypeCode.Single:
+                                case TypeCode.UInt16:
+                                case TypeCode.UInt32:
+                                case TypeCode.UInt64:
+                                    CustomMetadataCriteria = new tridion.CustomMetaValueCriteria(new tridion.CustomMetaKeyCriteria(((MemberExpression)b.Left).Member.Name), (float)((ConstantExpression)b.Right).Value, DetermineTridionFieldOperator(b.NodeType));
+                                    break;
+                                case TypeCode.String:
+                                    CustomMetadataCriteria = new tridion.CustomMetaValueCriteria(new tridion.CustomMetaKeyCriteria(((MemberExpression)b.Left).Member.Name), (string)((ConstantExpression)b.Right).Value, DetermineTridionFieldOperator(b.NodeType));
+                                    break;
+                                default:
+                                    break;
+                            }
+
+                            if (CustomMetadataCriteria != null)
+                            {
+                                currentCriteriaNode.AddCriteria(CustomMetadataCriteria);
+                            }
                         }
                         break;
                 }

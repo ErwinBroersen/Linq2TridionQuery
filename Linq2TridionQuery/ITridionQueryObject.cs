@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq.Expressions;
+using tridion = Tridion.ContentDelivery.DynamicContent.Query;
 
 namespace Linq2TridionQuery
 {
@@ -31,14 +33,76 @@ namespace Linq2TridionQuery
 
         string SchemaTitle { get; set; }
 
-        string StructureGroupUri { get; set; }
-        string StructureGroupDirectory { get; set; }
-        string StructureGroupTitle { get; set; }
+        IStructureGroupUri StructureGroupUri { get; set; }
+        IStructureGroupDirectory StructureGroupDirectory { get; set; }
+        IStructureGroupTitle StructureGroupTitle { get; set; }
 
         bool TaxonomyUsedForIdentification { get; set; }
         string TaxonomyUri { get; set; }
+        ITaxonomyKeyword TaxonomyKeyword { get; set; }
+        ITaxonomyKeywordDescription TaxonomyKeywordDescription { get; set; }
+        ITaxonomyKeywordKey TaxonomyKeywordKey { get; set; }
+        ITaxonomyKeywordName TaxonomyKeywordName { get; set; }
 
         // Sorting...
         ITridionSortingObject Sort { get; set; }
+    }
+
+    public interface IOperator
+    {
+        tridion.FieldOperator Operator { get; set; }
+    }
+
+    public interface IIncludeKeywordBranches
+    {
+        bool IncludeKeywordBranch { get; set; }
+    }
+
+    public interface IIncludeChildren
+    {
+        bool IncludeChild { get; set; }
+    }
+
+    public interface IStructureGroupUri : IIncludeChildren
+    {
+        string Uri { get; set; }
+    }
+
+    public interface IStructureGroupDirectory : IIncludeChildren, IOperator
+    {
+        string Directory { get; set; }
+    }
+
+    public interface IStructureGroupTitle : IIncludeChildren, IOperator
+    {
+        string Title { get; set; }
+    }
+
+    public interface ITaxonomy
+    {
+        int? PublicationId { get; set; }
+        int? TaxonomyId { get; set; }
+        string TaxonomyUri { get; set; }
+    }
+
+    public interface ITaxonomyKeyword : ITaxonomy, IIncludeKeywordBranches
+    {
+        int? KeywordId { get; set; }
+        string KeywordUri { get; set; }
+    }
+
+    public interface ITaxonomyKeywordDescription : ITaxonomy, IIncludeKeywordBranches, IOperator
+    {
+        string KeywordDescription { get; set; }
+    }
+
+    public interface ITaxonomyKeywordKey : ITaxonomy, IIncludeKeywordBranches, IOperator
+    {
+        string KeywordKey { get; set; }
+    }
+
+    public interface ITaxonomyKeywordName : ITaxonomy, IIncludeKeywordBranches, IOperator
+    {
+        string KeywordName { get; set; }
     }
 }

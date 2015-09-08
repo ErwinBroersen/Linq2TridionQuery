@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using tridion = Tridion.ContentDelivery.DynamicContent.Query;
 
 namespace Linq2TridionQuery
 {
@@ -35,13 +37,71 @@ namespace Linq2TridionQuery
 
         public string SchemaTitle { get; set; }
 
-        public string StructureGroupUri { get; set; }
-        public string StructureGroupDirectory { get; set; }
-        public string StructureGroupTitle { get; set; }
+        public IStructureGroupUri StructureGroupUri { get; set; }
+        public IStructureGroupDirectory StructureGroupDirectory { get; set; }
+        public IStructureGroupTitle StructureGroupTitle { get; set; }
 
         public bool TaxonomyUsedForIdentification { get; set; }
         public string TaxonomyUri { get; set; }
+        public ITaxonomyKeyword TaxonomyKeyword { get; set; }
+        public ITaxonomyKeywordDescription TaxonomyKeywordDescription { get; set; }
+        public ITaxonomyKeywordKey TaxonomyKeywordKey { get; set; }
+        public ITaxonomyKeywordName TaxonomyKeywordName { get; set; }
 
         public ITridionSortingObject Sort { get; set; }
+    }
+
+    public sealed class StructureGroupUri : IStructureGroupUri
+    {
+        public bool IncludeChild { get; set; }
+        public string Uri { get; set; }
+    }
+
+    public sealed class StructureGroupDirectory : IStructureGroupDirectory
+    {
+        public bool IncludeChild { get; set; }
+        public string Directory { get; set; }
+        public tridion.FieldOperator Operator { get; set; }
+    }
+
+    public sealed class StructureGroupTitle : IStructureGroupTitle
+    {
+        public bool IncludeChild { get; set; }
+        public string Title { get; set; }
+        public tridion.FieldOperator Operator { get; set; }
+    }
+
+    public abstract class TaxonomyKeywordBase : ITaxonomy
+    {
+        public int? PublicationId { get; set; }
+        public int? TaxonomyId { get; set; }
+        public string TaxonomyUri { get; set; }
+        public bool IncludeKeywordBranch { get; set; }
+    }
+
+    public abstract class TaxonomyKeywordOperatorBase : TaxonomyKeywordBase
+    {
+        public tridion.FieldOperator Operator { get; set; }
+    }
+
+    public sealed class TaxonomyKeyword : TaxonomyKeywordBase, ITaxonomyKeyword
+    {
+        public int? KeywordId { get; set; }
+        public string KeywordUri { get; set; }
+    }
+
+    public sealed class TaxonomyKeywordDescription : TaxonomyKeywordOperatorBase, ITaxonomyKeywordDescription
+    {
+        public string KeywordDescription { get; set; }
+    }
+
+    public sealed class TaxonomyKeywordKey : TaxonomyKeywordOperatorBase, ITaxonomyKeywordKey
+    {
+        public string KeywordKey { get; set; }
+    }
+
+    public sealed class TaxonomyKeywordName : TaxonomyKeywordOperatorBase, ITaxonomyKeywordName
+    {
+        public string KeywordName { get; set; }
     }
 }
